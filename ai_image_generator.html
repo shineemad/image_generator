@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator with Gemini</title>
+    <!-- Memuat Tailwind CSS untuk styling modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat font Inter dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Mengatur font default ke Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style untuk spinner/loading indicator */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4f46e5; /* Indigo color */
+            animation: spin 1s ease infinite;
+        }
+        .small-spinner {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border-left-color: #ffffff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Style untuk modal */
+        #prompt-modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        #prompt-modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white text-slate-800 rounded-2xl shadow-2xl p-6 md:p-10 w-full max-w-2xl">
+        
+        <!-- Header Aplikasi -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">AI Image Generator</h1>
+            <p class="text-slate-500 mt-2">Ditingkatkan dengan ✨<span class="font-semibold text-indigo-500">Gemini</span> untuk ide tak terbatas.</p>
+            <p class="text-xs text-amber-600 bg-amber-100 p-2 rounded-md mt-4">
+                <strong>Catatan:</strong> Proses pembuatan gambar mungkin memerlukan waktu 1-2 menit.
+            </p>
+        </div>
+
+        <!-- Form Input -->
+        <div class="space-y-4">
+            <div>
+                <label for="prompt-input" class="block text-sm font-medium text-slate-700 mb-1">Masukkan deskripsi gambar (prompt):</label>
+                <textarea id="prompt-input" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150" placeholder="Contoh: Kucing di pantai tropis"></textarea>
+            </div>
+            
+            <!-- Tombol Aksi Gemini -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                 <button id="enhance-btn" class="w-full bg-slate-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition duration-200 flex items-center justify-center disabled:bg-slate-400 disabled:cursor-not-allowed">
+                    <span class="flex items-center justify-center">✨ Tingkatkan Prompt</span>
+                </button>
+                <button id="surprise-btn" class="w-full bg-slate-200 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition duration-200 flex items-center justify-center disabled:bg-slate-400 disabled:cursor-not-allowed">
+                    <span class="flex items-center justify-center">🤯 Beri Saya Ide</span>
+                </button>
+            </div>
+
+            <button id="generate-btn" class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 flex items-center justify-center disabled:bg-slate-400 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-5 w-5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                <span>Buat Gambar</span>
+            </button>
+        </div>
+
+        <!-- Area Hasil Gambar -->
+        <div class="mt-8">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">Hasil Gambar</h2>
+            <div id="image-container" class="w-full min-h-[300px] bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center p-4">
+                <div id="placeholder" class="text-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto h-12 w-12 text-slate-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    <p class="mt-2">Gambar yang Anda buat akan muncul di sini.</p>
+                </div>
+                <div id="loader" class="hidden text-center text-slate-500">
+                    <div class="spinner mx-auto"></div>
+                    <p class="mt-4">AI sedang melukis... mohon tunggu.</p>
+                </div>
+                <img id="generated-image" class="hidden max-w-full max-h-[400px] rounded-md object-contain" alt="Gambar buatan AI">
+            </div>
+            <a id="download-btn" href="#" download="ai-generated-image.png" class="hidden mt-4 w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 items-center justify-center text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 h-5 w-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                <span>Unduh Gambar</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Modal untuk Saran Prompt Gemini -->
+    <div id="prompt-modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div id="prompt-modal-content" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 opacity-0 translate-y-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-900">✨ Pilihan Prompt dari Gemini</h3>
+                <button id="close-modal-btn" class="text-slate-500 hover:text-slate-800">&times;</button>
+            </div>
+            <div id="suggestions-list" class="space-y-3">
+                <!-- Saran akan dimasukkan di sini oleh JS -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Konfigurasi API ---
+            const HUGGING_FACE_API_URL = "TELAH DIHAPUS DEMI KEAMANAN";
+            const HUGGING_FACE_API_KEY = "YOUR_HUGGING_FACE_API_KEY"; 
+            
+            const GEMINI_API_KEY = ""; // Kunci API Gemini tidak diperlukan jika dijalankan di lingkungan yang mendukungnya
+            const GEMINI_API_URL = `SECRET_GEMINI_API_URL`; // URL Gemini API yang sesuai dengan lingkungan Anda
+
+            // Seleksi Elemen DOM
+            const promptInput = document.getElementById('prompt-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const enhanceBtn = document.getElementById('enhance-btn');
+            const surpriseBtn = document.getElementById('surprise-btn');
+            
+            const placeholder = document.getElementById('placeholder');
+            const loader = document.getElementById('loader');
+            const generatedImage = document.getElementById('generated-image');
+
+            const modalOverlay = document.getElementById('prompt-modal-overlay');
+            const modalContent = document.getElementById('prompt-modal-content');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const suggestionsList = document.getElementById('suggestions-list');
+
+            // --- Fungsi untuk Gambar (Hugging Face) ---
+            const generateImage = async () => {
+                const prompt = promptInput.value.trim();
+                if (HUGGING_FACE_API_KEY === "YOUR_HUGGING_FACE_API_KEY") {
+                    alert("Harap masukkan API Key Hugging Face Anda di dalam file script untuk menjalankan aplikasi.");
+                    return;
+                }
+                if (!prompt) {
+                    alert("Harap masukkan deskripsi gambar terlebih dahulu.");
+                    return;
+                }
+                setLoadingState(true);
+                try {
+                    const response = await fetch(HUGGING_FACE_API_URL, {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${HUGGING_FACE_API_KEY}`, "Content-Type": "application/json" },
+                        body: JSON.stringify({ "inputs": prompt }),
+                    });
+                    if (!response.ok) throw new Error(`Gagal membuat gambar: ${await response.text()}`);
+                    const imageBlob = await response.blob();
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    generatedImage.src = imageUrl;
+                    downloadBtn.href = imageUrl;
+                    generatedImage.onload = () => {
+                        setLoadingState(false);
+                        placeholder.classList.add('hidden');
+                        generatedImage.classList.remove('hidden');
+                        downloadBtn.classList.remove('hidden');
+                        downloadBtn.classList.add('flex');
+                    };
+                } catch (error) {
+                    console.error(error);
+                    alert(error.message);
+                    setLoadingState(false);
+                    placeholder.classList.remove('hidden');
+                    generatedImage.classList.add('hidden');
+                    downloadBtn.classList.add('hidden');
+                }
+            };
+            
+            // --- Fungsi untuk Gemini API ---
+
+            // 1. Tingkatkan Prompt
+            const enhancePrompt = async () => {
+                const userPrompt = promptInput.value.trim();
+                if (!userPrompt) {
+                    alert("Tulis ide dasar Anda terlebih dahulu di kotak deskripsi.");
+                    return;
+                }
+
+                setGeminiLoadingState(enhanceBtn, true, '✨ Meningkatkan...');
+
+                const payload = {
+                    contents: [{ parts: [{ text: `You are a creative assistant for an AI image generator. Enhance the following user prompt to be more descriptive, vivid, and artistic. Provide three diverse and detailed options. User prompt: "${userPrompt}"` }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: { type: "STRING" }
+                        }
+                    }
+                };
+
+                try {
+                    const response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Respon dari Gemini API tidak valid.');
+                    const HUGGING_FACE_API_KEY = "secret";
+                    const result = await response.json();
+                    const suggestions = JSON.parse(result.candidates[0].content.parts[0].text);
+                    displaySuggestions(suggestions);
+
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    alert("Gagal mendapatkan saran dari Gemini. Coba lagi.");
+                } finally {
+                    setGeminiLoadingState(enhanceBtn, false, '✨ Tingkatkan Prompt');
+                }
+            };
+
+            // 2. Beri Ide (Surprise Me)
+            const surpriseMe = async () => {
+                setGeminiLoadingState(surpriseBtn, true, '🤯 Mencari ide...');
+                
+                const payload = {
+                    contents: [{ parts: [{ text: "Generate one highly creative, random, and visually detailed prompt for an AI image generator. Reply only with the prompt itself, without any extra text or quotation marks." }] }]
+                };
+
+                try {
+                    const response = await fetch(GEMINI_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Respon dari Gemini API tidak valid.');
+                    
+                    const result = await response.json();
+                    const newPrompt = result.candidates[0].content.parts[0].text;
+                    promptInput.value = newPrompt.trim();
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    alert("Gagal mendapatkan ide dari Gemini. Coba lagi.");
+                } finally {
+                    setGeminiLoadingState(surpriseBtn, false, '🤯 Beri Saya Ide');
+                }
+            };
+            
+            // --- Fungsi Bantuan UI ---
+
+            const setLoadingState = (isLoading) => {
+                generateBtn.disabled = isLoading;
+                if (isLoading) {
+                    placeholder.classList.add('hidden');
+                    generatedImage.classList.add('hidden');
+                    downloadBtn.classList.add('hidden');
+                    loader.classList.remove('hidden');
+                    generateBtn.querySelector('span').textContent = 'Membuat...';
+                } else {
+                    loader.classList.add('hidden');
+                    generateBtn.querySelector('span').textContent = 'Buat Gambar';
+                }
+            };
+
+            const setGeminiLoadingState = (button, isLoading, text) => {
+                button.disabled = isLoading;
+                const span = button.querySelector('span');
+                if(isLoading) {
+                    span.innerHTML = `<div class="small-spinner mr-2"></div> ${text}`;
+                } else {
+                    span.innerHTML = text;
+                }
+            };
+            
+            const displaySuggestions = (suggestions) => {
+                suggestionsList.innerHTML = '';
+                suggestions.forEach(suggestion => {
+                    const suggestionDiv = document.createElement('div');
+                    suggestionDiv.className = 'p-3 bg-slate-100 rounded-md cursor-pointer hover:bg-indigo-100 border border-slate-200 transition';
+                    suggestionDiv.textContent = suggestion;
+                    suggestionDiv.onclick = () => {
+                        promptInput.value = suggestion;
+                        closeModal();
+                    };
+                    suggestionsList.appendChild(suggestionDiv);
+                });
+                openModal();
+            };
+
+            const openModal = () => {
+                modalOverlay.classList.remove('hidden');
+                modalOverlay.classList.add('flex');
+                setTimeout(() => {
+                    modalOverlay.classList.remove('opacity-0');
+                    modalContent.classList.remove('opacity-0', 'translate-y-4');
+                }, 10);
+            };
+
+            const closeModal = () => {
+                modalOverlay.classList.add('opacity-0');
+                modalContent.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    modalOverlay.classList.add('hidden');
+                    modalOverlay.classList.remove('flex');
+                }, 300);
+            };
+
+            // --- Event Listeners ---
+            generateBtn.addEventListener('click', generateImage);
+            enhanceBtn.addEventListener('click', enhancePrompt);
+            surpriseBtn.addEventListener('click', surpriseMe);
+            closeModalBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if(e.target === modalOverlay) closeModal();
+            });
+        });
+    </script>
+</body>
+</html>
+
