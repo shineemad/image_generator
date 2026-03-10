@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latihan GSAP ScrollTrigger</title>
+    <style>
+        /* CSS DASAR (Kostum Panggung) */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #111; /* Tema gelap ala Awwwards */
+            color: white;
+        }
+
+        /* Section pertama (Hanya untuk memberi jarak scroll) */
+        .header {
+            height: 100vh; /* Setinggi layar penuh */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+        }
+
+        /* Section kedua (Tempat animasi terjadi) */
+        .konten {
+            min-height: 100vh;
+            padding: 100px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Kotak-kotak yang akan dianimasikan */
+        .kotak1, .kotak2, .kotak3 {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background-color: #e74c3c;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            scrollbar-width: none; /* Sembunyikan scrollbar */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Scroll ke bawah perlahan! 👇</h1>
+    </div>
+
+    <div class="konten">
+        <div class="kotak1">Kotak 1</div>
+        <div class="kotak2">Kotak 2</div>
+        <div class="kotak3">Kotak 3</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        // Langkah 1: Beritahu GSAP bahwa kita mau pakai fitur ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Langkah 2: Berikan instruksi animasinya
+        // gsap.from() artinya: "Mulai dari state ini, lalu kembalikan ke CSS aslinya"
+        gsap.from(".kotak1", {
+            scrollTrigger: {
+                trigger: ".kotak1", // Kapan animasi mulai? Saat area ".konten" masuk ke layar
+                start: "top 80%",   // Animasi jalan ketika ujung atas ".konten" menyentuh 80% dari tinggi layar
+            },
+            y: 100,           // Awalnya geser ke bawah sebanyak 100 piksel
+            opacity: 0,       // Awalnya tembus pandang (hilang)
+            duration: 6,      // Durasi animasi 6 detik
+            stagger: 0.6,     // INI YANG BIKIN KEREN! Munculnya bergantian, jeda 0.6 detik antar kotak
+            ease: "power3.out" // Gaya lengkungan pergerakan (awalnya cepat, berhentinya mulus)
+        });
+
+        gsap.from(".kotak2", {
+            scrollTrigger: {
+                trigger: ".kotak2",
+                start: "top 80%",
+            },
+            y: 100,
+            opacity: 0,
+            duration: 6,
+            stagger: 0.6,
+            ease: "power3.out"
+        });
+
+        gsap.from(".kotak3", {
+            scrollTrigger: {
+                trigger: ".kotak3",
+                start: "top 80%",
+            },
+            y: 100,
+            opacity: 0,
+            duration: 6,
+            stagger: 0.6,
+            ease: "power3.out"
+        });
+    </script>
+</body>
+</html>

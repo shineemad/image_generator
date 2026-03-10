@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizontal Scroll Awwwards</title>
+    <style>
+        /* Hilangkan Scrollbar */
+        body::-webkit-scrollbar { display: none; }
+        body { margin: 0; font-family: sans-serif; background-color: #000; overflow-x: hidden; }
+
+        /* Section pembuka biasa */
+        .intro, .outro {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 2rem;
+            background: #222;
+        }
+
+        /* Pembungkus utama untuk area horizontal */
+        .pembungkus-horizontal {
+            width: 100%;
+            height: 100vh; /* Setinggi layar penuh */
+            overflow: hidden; /* Sembunyikan elemen yang melebar ke kanan */
+        }
+
+        /* Jalur panjang tempat panel-panel berjejer ke samping */
+        .jalur-panjang {
+            display: flex; /* Bikin elemen berjejer ke samping */
+            width: 300vw; /* Lebarnya 3x lipat layar monitor kamu! */
+            height: 100vh;
+        }
+
+        /* Desain tiap panel/slide */
+        .panel {
+            width: 100vw; /* Tiap panel selebar 1 layar monitor */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .warna-1 { background-color: #e74c3c; }
+        .warna-2 { background-color: #f1c40f; color: black; }
+        .warna-3 { background-color: #3498db; }
+    </style>
+</head>
+<body>
+
+    <div class="intro">Scroll terus ke bawah! 👇</div>
+
+    <div class="pembungkus-horizontal">
+        <div class="jalur-panjang">
+            <div class="panel warna-1">SLIDE 1</div>
+            <div class="panel warna-2">SLIDE 2</div>
+            <div class="panel warna-3">SLIDE 3</div>
+        </div>
+    </div>
+    <div class="outro">Selesai! Lanjut ke bawah. 👋</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Cari elemen ".jalur-panjang" yang lebarnya 3 layar tadi
+        let jalur = document.querySelector(".jalur-panjang");
+
+        gsap.to(jalur, {
+            x: "-200vw", // Geser jalur itu ke KIRI sejauh 2 layar (karena layar 1 sudah tampil)
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".pembungkus-horizontal", // Area pemicu
+                pin: true, // INI KUNCINYA! Kunci/tempel layarnya agar tidak turun ke bawah saat digeser
+                scrub: 1,  // Ikat animasi dengan scroll (kalau scroll mundur, animasi ikut mundur dengan mulus)
+                end: "+=2000" // Jarak "jalan semu" agar penggeseran punya ruang untuk bernapas
+            }
+        });
+    </script>
+</body>
+</html>
